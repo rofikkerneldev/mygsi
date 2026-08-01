@@ -30,12 +30,17 @@ jobs:
         env:
           GOFILE_API_KEY: ${{ secrets.GOFILE_API_KEY }}
         run: |
-          echo "=== API ==="
-          curl -I -L https://api.gofile.io/servers
+          - name: Test GoFile Endpoints
+            echo "servers"
+            curl -I --connect-timeout 15 --max-time 20 https://api.gofile.io/servers || true
 
-          echo
-          echo "=== Body ==="
-          curl -L https://api.gofile.io/servers
+            echo
+            echo "upload"
+            curl -I --connect-timeout 15 --max-time 20 https://upload.gofile.io/uploadfile || true
+
+            echo
+            echo "homepage"
+            curl -I --connect-timeout 15 --max-time 20 https://gofile.io || true
     
           chmod +x uploadgofile.sh
 
