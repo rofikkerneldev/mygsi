@@ -25,11 +25,18 @@ jobs:
       - name: Show Files
         run: |
           ls -lah Output
-
+      
       - name: Upload Using uploadgofile.sh
         env:
           GOFILE_API_KEY: ${{ secrets.GOFILE_API_KEY }}
         run: |
+          echo "=== API ==="
+          curl -I -L https://api.gofile.io/servers
+
+          echo
+          echo "=== Body ==="
+          curl -L https://api.gofile.io/servers
+    
           chmod +x uploadgofile.sh
 
           FILE=$(ls Output/* | head -n 1)
