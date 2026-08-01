@@ -25,23 +25,54 @@ jobs:
       - name: Show Files
         run: |
           ls -lah Output
+
+          
       
+     name: Test GoFile Upload
+
+on:
+  workflow_dispatch:
+
+jobs:
+  test-upload:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v4
+
+      - name: Install Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y jq curl
+
+      - name: Generate Test File
+        run: |
+          mkdir -p Output
+          echo "FoxetGSI Test Upload" > Output/test.txt
+          dd if=/dev/urandom of=Output/random.bin bs=1M count=5
+
+      - name: Show Files
+        run: |
+          ls -lah Output
+
+      - name: Test GoFile Endpoints
+        run: |
+          echo "=== servers ==="
+          curl -I --connect-timeout 15 --max-time 20 https://api.gofile.io/servers || true
+
+          echo
+          echo "=== upload ==="
+          curl -I --connect-timeout 15 --max-time 20 https://upload.gofile.io/uploadfile || true
+
+          echo
+          echo "=== homepage ==="
+          curl -I --connect-timeout 15 --max-time 20 https://gofile.io || true
+
       - name: Upload Using uploadgofile.sh
         env:
           GOFILE_API_KEY: ${{ secrets.GOFILE_API_KEY }}
         run: |
-          - name: Test GoFile Endpoints
-            echo "servers"
-            curl -I --connect-timeout 15 --max-time 20 https://api.gofile.io/servers || true
-
-            echo
-            echo "upload"
-            curl -I --connect-timeout 15 --max-time 20 https://upload.gofile.io/uploadfile || true
-
-            echo
-            echo "homepage"
-            curl -I --connect-timeout 15 --max-time 20 https://gofile.io || true
-    
           chmod +x uploadgofile.sh
 
           FILE=$(ls Output/* | head -n 1)
