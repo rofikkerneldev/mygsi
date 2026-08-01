@@ -26,36 +26,6 @@ jobs:
         run: |
           ls -lah Output
 
-          
-      
-     name: Test GoFile Upload
-
-on:
-  workflow_dispatch:
-
-jobs:
-  test-upload:
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout Repo
-        uses: actions/checkout@v4
-
-      - name: Install Dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y jq curl
-
-      - name: Generate Test File
-        run: |
-          mkdir -p Output
-          echo "FoxetGSI Test Upload" > Output/test.txt
-          dd if=/dev/urandom of=Output/random.bin bs=1M count=5
-
-      - name: Show Files
-        run: |
-          ls -lah Output
-
       - name: Test GoFile Endpoints
         run: |
           echo "=== servers ==="
