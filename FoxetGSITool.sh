@@ -121,31 +121,6 @@ bdisplay=$(grep "$displayid" "$BASE_DIR/system/build.prop" | sed 's/\./\\./g; s:
 sed -i "s/$bdisplay/$displayid2=Rofikkerneldev" "$BASE_DIR/system/build.prop"
 
 current_date=$(date +"%Y-%m-%d")
-if [ "$ROM_TYPE" = "HiOS" ]; then
-    echo "========== HiOS DEBUG =========="
-
-    echo "[SELinux contexts]"
-    find "$BASE_DIR" -type f \( \
-        -name "*file_contexts*" -o \
-        -name "*property_contexts*" -o \
-        -name "*.cil" \
-    \) | while read -r f; do
-        grep -HnEi "tran|trans|tecno|transsion|infinix|itel|tr_" "$f" 2>/dev/null || true
-    done
-
-    echo
-    echo "[Files/dirs]"
-    find "$BASE_DIR" \( \
-        -iname "*tran*" -o \
-        -iname "*trans*" \
-    \) 2>/dev/null
-
-    echo
-    echo "[Generated file_contexts candidate]"
-    grep -RInEi "tran|trans|tecno|transsion|infinix|itel|tr_" Temp 2>/dev/null || true
-
-    echo "================================"
-fi
 echo "Create $ROM_TYPE-AB-$android_version-$current_date.img"
 rm -rf "Output"
 mkdir -p "Output"
