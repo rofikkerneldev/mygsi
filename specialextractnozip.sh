@@ -2,7 +2,34 @@
 
 ROM_LINK=$1
 ROM_TYPE=$2
-partitions="vendor system system_ext product optics prism mi_ext my_bigball my_engineering my_manifest my_region my_carrier my_heytap my_product my_stock"
+partitions="
+vendor
+system
+system_ext
+product
+
+optics
+prism
+
+mi_ext
+my_bigball
+my_engineering
+my_manifest
+my_region
+my_carrier
+my_heytap
+my_product
+my_stock
+
+tr_carrier
+tr_company
+tr_manifest
+tr_misc
+tr_overlayfs
+tr_preload
+tr_product
+tr_region
+"
 
 usage() {
   echo "Usage: $0 [rom_link] [rom_type]"
