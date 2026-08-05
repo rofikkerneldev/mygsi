@@ -28,7 +28,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          submodules: false # We handle this manually
+          submodules: false # We handle this manually 
 
 
       - name: Install System Dependencies
