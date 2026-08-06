@@ -22,14 +22,3 @@ else
 fi
 
 echo "Applying HiOS patches..."
-
-# clearSELinux Transsion
-find "$BASE_DIR" -type f \( -name "*file_contexts*" -o -name "*.cil" -o -name "*property_contexts*" \) \
-    -exec sed -i '/tr_/d;/transsion/d;/tecno/d;/infinix/d;/itel/d' {} +
-
-# clean seapp_contexts bila ada
-[ -f "$product/etc/selinux/product_seapp_contexts" ] && \
-    sed -i '/tr_/d;/transsion/d' "$product/etc/selinux/product_seapp_contexts"
-
-[ -f "$system_ext/etc/selinux/system_ext_seapp_contexts" ] && \
-    sed -i '/tr_/d;/transsion/d' "$system_ext/etc/selinux/system_ext_seapp_contexts"
