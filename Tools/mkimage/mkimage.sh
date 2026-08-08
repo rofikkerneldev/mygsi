@@ -47,6 +47,18 @@ done
 awk '!seen[$0]++' "$TEMP_DIR/file_contexts" > "$TEMP_DIR/file_contexts.tmp"
 mv "$TEMP_DIR/file_contexts.tmp" "$TEMP_DIR/file_contexts"
 
+#########################################################
+# Remove unused /transfs SELinux contexts
+#########################################################
+
+echo "Checking /transfs SELinux contexts..."
+grep -nE '^/transfs' "$TEMP_DIR/file_contexts" || true
+
+sed -i -E '/^\/transfs/d' "$TEMP_DIR/file_contexts"
+
+echo "Remaining /transfs SELinux contexts:"
+grep -nE '^/transfs' "$TEMP_DIR/file_contexts" || true
+
 file_contexts="$TEMP_DIR/file_contexts"
 
 append_context() {
