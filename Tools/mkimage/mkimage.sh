@@ -47,6 +47,22 @@ done
 awk '!seen[$0]++' "$TEMP_DIR/file_contexts" > "$TEMP_DIR/file_contexts.tmp"
 mv "$TEMP_DIR/file_contexts.tmp" "$TEMP_DIR/file_contexts"
 
+
+#########################################################
+# Remove unused Transsion mount points
+#########################################################
+
+echo "===== Checking Transsion mount points ====="
+
+find "$BASE_DIR" -maxdepth 2 \( -name "tranfs" -o -name "transfs" \) -print || true
+
+rm -rf "$BASE_DIR/tranfs"
+rm -rf "$BASE_DIR/transfs"
+
+echo "===== After cleanup ====="
+
+find "$BASE_DIR" -maxdepth 2 \( -name "tranfs" -o -name "transfs" \) -print || true
+
 #########################################################
 # Remove unused Transsion SELinux contexts
 #########################################################
