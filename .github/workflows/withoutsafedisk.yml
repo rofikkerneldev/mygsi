@@ -58,22 +58,67 @@ jobs:
         id: download
         run: |
          LINK="${{ steps.prep.outputs.url }}"
+         
+         mkdir -p original_download
+          if [[ "$LINK" == *"drive.google.com"* ]]; then
+            echo "Google Drive detected."
 
-         if [[ "$LINK" == *"drive.google.com"* ]]; then
-         echo "Google Drive detected."
+            FILEID=$(echo "$LINK" | sed -n 's#.*file/d/\([^/]*\).*#\1#p')
 
-         FILEID=$(echo "$LINK" | sed -n 's#.*file/d/\([^/]*\).*#\1#p')
+            if [[ -z "$FILEID" ]]; then
+              echo "Cannot parse Google Drive File ID!"
+              exit 1
+            fi
 
-         if [[ -z "$FILEID" ]]; then
-         echo "Cannot parse Google Drive File ID!"
-         exit 1
-         fi
+            echo "Downloading from Google Drive..."
 
-         gdown "$FILEID" -O firmware.zip
-         else
-         echo "Direct download detected."
-         wget --progress=bar:force:noscroll -O firmware.zip "$LINK"
-         fi
+            # Let gdown determine the real filename
+            cd original_download
+            gdown "$FILEID"
+
+            DOWNLOADED_FILE=$(find . -maxdepth 1 -type f | head -n 1)
+
+            if [[ -z "$DOWNLOADED_FILE" ]]; then
+              echo "Failed to find downloaded firmware!"
+              exit 1
+            fi
+
+            ORIGINAL_FILENAME=$(basename "$DOWNLOADED_FILE")
+
+            cd ..
+
+            mv "original_download/$ORIGINAL_FILENAME" firmware.zip
+
+          else
+            echo "Direct download detected."
+
+            # First ask the server for the real filename
+            ORIGINAL_FILENAME=$(curl -L -s -D - -o /dev/null "$LINK" \
+              | grep -i '^content-disposition:' \
+              | sed -n 's/.*filename\*=[^;]*'\'''\''\([^;]*\).*/\1/p' \
+              | sed 's/\r$//' \
+              | python3 -c 'import sys, urllib.parse; x=sys.stdin.read().strip(); print(urllib.parse.unquote(x))' || true)
+
+            # Fallback to normal filename from URL
+            if [[ -z "$ORIGINAL_FILENAME" ]]; then
+              ORIGINAL_FILENAME=$(basename "${LINK%%\?*}")
+            fi
+
+            # Remove possible query/encoding artifacts
+            ORIGINAL_FILENAME=$(python3 -c "import urllib.parse; print(urllib.parse.unquote('''$ORIGINAL_FILENAME'''))")
+
+            echo "Original filename: $ORIGINAL_FILENAME"
+
+            wget --progress=bar:force:noscroll -O firmware.zip "$LINK"
+          fi
+
+          echo "======================================"
+          echo "Original firmware: $ORIGINAL_FILENAME"
+          echo "Saved locally as: firmware.zip"
+          echo "======================================"
+
+          echo "original_filename=$ORIGINAL_FILENAME" >> "$GITHUB_OUTPUT"
+          
       - name: Make all scripts executable
         run: |
           find . -type f -name "*.sh" -exec chmod +x {} \;
@@ -88,7 +133,19 @@ jobs:
           GOFILE_API_KEY: ${{ secrets.GOFILE_API_KEY }}
         run: |
           sudo chown -R $USER:$USER .
-          FILE=$(ls Output/*.zip* | head -n 1)
-          bash uploadgofile.sh "$FILE"
+          ORIGINAL_FILENAME="${{ steps.download.outputs.original_filename }}"
+
+          # Remove the original extension
+          ROM_BASENAME="${ORIGINAL_FILENAME%.*}"
+
+          # Rename generated system.zip
+          OUTPUT_FILE="Output/${ROM_BASENAME}-rofikkerneldev.zip"
+
+          echo "Original firmware : $ORIGINAL_FILENAME"
+          echo "Generated GSI     : $OUTPUT_FILE"
+
+          mv "Output/system.zip" "$OUTPUT_FILE"
+
+          bash uploadgofile.sh "$OUTPUT_FILE"
         
           
