@@ -45,77 +45,177 @@ jobs:
       - name: Install Python Dependencies
         run: |
           python3 -m pip install backports.lzma bsdiff4 twrpdtgen extract-dtb pycryptodome
-      - name: Prepare and Clean URL
+       - name: Prepare and Clean URL
         id: prep
         run: |
           LINK="${{ inputs.firmware_link }}"
+
+          # Resolve Google redirect URL
           if [[ "$LINK" == *"google.com/url"* ]]; then
-             LINK=$(echo "$LINK" | grep -oP 'q=\K[^&]*' | python3 -c "import sys, urllib.parse; print(urllib.parse.unquote(sys.stdin.read().strip()))")
+            LINK=$(echo "$LINK" \
+              | grep -oP 'q=\K[^&]*' \
+              | python3 -c "import sys, urllib.parse; print(urllib.parse.unquote(sys.stdin.read().strip()))")
           fi
-          echo "url=$LINK" >> $GITHUB_OUTPUT
+
+          echo "Final URL:"
+          echo "$LINK"
+
+          echo "url=$LINK" >> "$GITHUB_OUTPUT"
 
       - name: Download Firmware
         id: download
         run: |
-         LINK="${{ steps.prep.outputs.url }}"
-         
-         mkdir -p original_download
-          if [[ "$LINK" == *"drive.google.com"* ]]; then
+          LINK="${{ steps.prep.outputs.url }}"
+
+          rm -rf original_download
+          mkdir -p original_download
+
+          # ============================================================
+          # GOOGLE DRIVE
+          # ============================================================
+          if [[ "$LINK" == *"drive.google.com"* || "$LINK" == *"drive.usercontent.google.com"* ]]; then
+
             echo "Google Drive detected."
 
-            FILEID=$(echo "$LINK" | sed -n 's#.*file/d/\([^/]*\).*#\1#p')
+            FILEID=""
+
+            # ----------------------------------------------------------
+            # drive.usercontent.google.com/download?id=FILEID
+            # ----------------------------------------------------------
+            if [[ "$LINK" == *"drive.usercontent.google.com"* ]]; then
+
+              FILEID=$(python3 -c "
+          import urllib.parse
+          url = '''$LINK'''
+          query = urllib.parse.parse_qs(
+              urllib.parse.urlparse(url).query
+          )
+          print(query.get('id', [''])[0])
+          ")
+
+            # ----------------------------------------------------------
+            # drive.google.com/file/d/FILEID/...
+            # ----------------------------------------------------------
+            else
+
+              FILEID=$(echo "$LINK" \
+                | sed -n 's#.*file/d/\([^/?]*\).*#\1#p')
+
+              # --------------------------------------------------------
+              # Also support:
+              # drive.google.com/open?id=FILEID
+              # drive.google.com/uc?id=FILEID
+              # --------------------------------------------------------
+              if [[ -z "$FILEID" ]]; then
+                FILEID=$(python3 -c "
+          import urllib.parse
+          url = '''$LINK'''
+          query = urllib.parse.parse_qs(
+              urllib.parse.urlparse(url).query
+          )
+          print(query.get('id', [''])[0])
+          ")
+              fi
+
+            fi
 
             if [[ -z "$FILEID" ]]; then
-              echo "Cannot parse Google Drive File ID!"
+              echo "ERROR: Cannot parse Google Drive File ID!"
+              echo "URL: $LINK"
               exit 1
             fi
 
-            echo "Downloading from Google Drive..."
+            echo "Google Drive File ID: $FILEID"
+            echo "Downloading with gdown..."
 
-            # Let gdown determine the real filename
             cd original_download
+
+            # Let gdown handle Google Drive confirmation,
+            # cookies, filename, etc.
             gdown "$FILEID"
 
-            DOWNLOADED_FILE=$(find . -maxdepth 1 -type f | head -n 1)
+            DOWNLOADED_FILE=$(find . -maxdepth 1 -type f -print -quit)
 
             if [[ -z "$DOWNLOADED_FILE" ]]; then
-              echo "Failed to find downloaded firmware!"
+              echo "ERROR: gdown did not download any file!"
               exit 1
             fi
 
             ORIGINAL_FILENAME=$(basename "$DOWNLOADED_FILE")
 
+            echo "Original filename: $ORIGINAL_FILENAME"
+
             cd ..
 
             mv "original_download/$ORIGINAL_FILENAME" firmware.zip
 
+          # ============================================================
+          # NORMAL DIRECT DOWNLOAD
+          # ============================================================
           else
+
             echo "Direct download detected."
 
-            # First ask the server for the real filename
+            # ----------------------------------------------------------
+            # Try to obtain filename from Content-Disposition
+            # ----------------------------------------------------------
             ORIGINAL_FILENAME=$(curl -L -s -D - -o /dev/null "$LINK" \
               | grep -i '^content-disposition:' \
               | sed -n 's/.*filename\*=[^;]*'\'''\''\([^;]*\).*/\1/p' \
               | sed 's/\r$//' \
-              | python3 -c 'import sys, urllib.parse; x=sys.stdin.read().strip(); print(urllib.parse.unquote(x))' || true)
+              | python3 -c '
+          import sys
+          import urllib.parse
 
-            # Fallback to normal filename from URL
+          x = sys.stdin.read().strip()
+          print(urllib.parse.unquote(x))
+          ' || true)
+
+            # ----------------------------------------------------------
+            # Fallback to filename from URL
+            # ----------------------------------------------------------
             if [[ -z "$ORIGINAL_FILENAME" ]]; then
               ORIGINAL_FILENAME=$(basename "${LINK%%\?*}")
             fi
 
-            # Remove possible query/encoding artifacts
-            ORIGINAL_FILENAME=$(python3 -c "import urllib.parse; print(urllib.parse.unquote('''$ORIGINAL_FILENAME'''))")
+            # Remove encoding/query artifacts
+            ORIGINAL_FILENAME=$(python3 -c "
+          import urllib.parse
+          print(urllib.parse.unquote('''$ORIGINAL_FILENAME'''))
+          ")
 
             echo "Original filename: $ORIGINAL_FILENAME"
 
-            wget --progress=bar:force:noscroll -O firmware.zip "$LINK"
+            wget \
+              --progress=bar:force:noscroll \
+              -O firmware.zip \
+              "$LINK"
+
           fi
+
+          # ============================================================
+          # RESULT
+          # ============================================================
+
+          if [[ ! -f firmware.zip ]]; then
+            echo "ERROR: firmware.zip was not created!"
+            exit 1
+          fi
+
+          FILE_SIZE=$(stat -c%s firmware.zip)
 
           echo "======================================"
           echo "Original firmware: $ORIGINAL_FILENAME"
           echo "Saved locally as: firmware.zip"
+          echo "File size: $FILE_SIZE bytes"
           echo "======================================"
+
+          # Prevent accidentally continuing with an HTML response
+          if file firmware.zip | grep -qiE 'HTML|text'; then
+            echo "ERROR: Downloaded file appears to be HTML, not firmware!"
+            file firmware.zip
+            exit 1
+          fi
 
           echo "original_filename=$ORIGINAL_FILENAME" >> "$GITHUB_OUTPUT"
           
