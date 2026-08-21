@@ -45,7 +45,7 @@ jobs:
       - name: Install Python Dependencies
         run: |
           python3 -m pip install backports.lzma bsdiff4 twrpdtgen extract-dtb pycryptodome
-       - name: Prepare and Clean URL
+      - name: Prepare and Clean URL
         id: prep
         run: |
           LINK="${{ inputs.firmware_link }}"
