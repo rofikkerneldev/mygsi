@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       gofile_link:
-        description: "GoFile download link"
+        description: "GoFile public link"
         required: true
         type: string
 
@@ -19,11 +19,10 @@ jobs:
       - name: Install Dependencies
         run: |
           python3 -m pip install --upgrade pip
-          python3 -m pip install gofile-dl
+          python3 -m pip install requests
 
       - name: Download GoFile
         env:
-          GOFILE_API_KEY: ${{ secrets.GOFILE_API_KEY }}
           GOFILE_LINK: ${{ inputs.gofile_link }}
         run: |
           rm -rf original_download
@@ -34,11 +33,9 @@ jobs:
           echo "$GOFILE_LINK"
           echo "======================================"
 
-          gofile-dl \
-            --output-dir original_download \
-            --token "$GOFILE_API_KEY" \
-            --verbose \
-            "$GOFILE_LINK"
+          python3 gofile_dl.py \
+            "$GOFILE_LINK" \
+            -o original_download/firmware.zip
 
       - name: Show Downloaded Files
         run: |
@@ -51,3 +48,23 @@ jobs:
           echo
           echo "Disk usage:"
           du -sh original_download
+
+      - name: Verify Firmware
+        run: |
+          FILE="original_download/firmware.zip"
+
+          if [ ! -f "$FILE" ]; then
+            echo "ERROR: firmware.zip not found!"
+            exit 1
+          fi
+
+          echo "File:"
+          ls -lh "$FILE"
+
+          echo
+          echo "File type:"
+          file "$FILE"
+
+          echo
+          echo "Testing ZIP..."
+          unzip -t "$FILE"
