@@ -1,13 +1,15 @@
 import os
-import re
 import sys
+import asyncio
 from urllib.parse import urlparse
 
 from telethon import TelegramClient
+from telethon.sessions import StringSession
 
 
 API_ID = int(os.environ["TG_API_ID"])
 API_HASH = os.environ["TG_API_HASH"]
+TG_SESSION = os.environ["TG_SESSION"]
 TELEGRAM_LINK = os.environ["TELEGRAM_LINK"]
 
 OUTPUT_DIR = "Output"
@@ -17,23 +19,23 @@ def parse_telegram_link(link):
     parsed = urlparse(link)
 
     if parsed.scheme not in ("http", "https"):
-        raise ValueError("Telegram link harus menggunakan http/https")
+        raise ValueError("Invalid Telegram URL")
 
-    if parsed.netloc not in ("t.me", "www.t.me", "telegram.me"):
-        raise ValueError("Hanya link Telegram public yang didukung")
+    if parsed.netloc not in ("t.me", "www.t.me"):
+        raise ValueError("Only public t.me links are supported")
 
     parts = parsed.path.strip("/").split("/")
 
     if len(parts) != 2:
         raise ValueError(
-            "Format link harus seperti https://t.me/channel/12345"
+            "Expected format: https://t.me/channel/12345"
         )
 
     username = parts[0]
     message_id = int(parts[1])
 
-    if username.startswith("+") or username.startswith("joinchat"):
-        raise ValueError("Private/invite link tidak didukung")
+    if username.startswith("+") or username == "joinchat":
+        raise ValueError("Private Telegram links are not supported")
 
     return username, message_id
 
@@ -46,21 +48,23 @@ async def main():
 
     os.makedirs(OUTPUT_DIR, exist_ok=True)
 
-    from telethon.sessions import StringSession
+    client = TelegramClient(
+        StringSession(TG_SESSION),
+        API_ID,
+        API_HASH
+    )
 
-SESSION = os.environ["TG_SESSION"]
+    print("Connecting to Telegram...")
 
-client = TelegramClient(
-    StringSession(SESSION),
-    API_ID,
-    API_HASH
-)
+    await client.connect()
 
-await client.connect()
-
-if not await client.is_user_authorized():
-    raise RuntimeError("Telegram session tidak valid atau sudah expired")
     try:
+        if not await client.is_user_authorized():
+            raise RuntimeError(
+                "TG_SESSION is invalid or expired"
+            )
+
+        print("Telegram session OK")
         print("Getting Telegram message...")
 
         message = await client.get_messages(
@@ -69,11 +73,11 @@ if not await client.is_user_authorized():
         )
 
         if not message:
-            raise RuntimeError("Message tidak ditemukan")
+            raise RuntimeError("Message not found")
 
         if not message.file:
             raise RuntimeError(
-                "Message tersebut tidak berisi file/document"
+                "This Telegram message does not contain a file"
             )
 
         filename = message.file.name
@@ -81,30 +85,34 @@ if not await client.is_user_authorized():
         if not filename:
             filename = f"telegram_{message_id}"
 
-        output_path = os.path.join(OUTPUT_DIR, filename)
+        output_path = os.path.join(
+            OUTPUT_DIR,
+            filename
+        )
 
         size = message.file.size
 
         print(f"Filename: {filename}")
 
         if size:
-            print(f"Size    : {size / 1024 / 1024:.2f} MB")
+            print(
+                f"Size    : "
+                f"{size / 1024 / 1024:.2f} MB"
+            )
 
         print()
         print("Starting download...")
 
-        last_percent = -1
+        last_percent = [-1]
 
         def progress(current, total):
-            nonlocal last_percent
-
             if not total:
                 return
 
             percent = int(current * 100 / total)
 
-            if percent != last_percent:
-                last_percent = percent
+            if percent != last_percent[0]:
+                last_percent[0] = percent
 
                 downloaded = current / 1024 / 1024
                 total_mb = total / 1024 / 1024
@@ -112,7 +120,8 @@ if not await client.is_user_authorized():
                 print(
                     f"\rDownloading: "
                     f"{percent:3d}% "
-                    f"({downloaded:.1f}/{total_mb:.1f} MB)",
+                    f"({downloaded:.1f}/"
+                    f"{total_mb:.1f} MB)",
                     end="",
                     flush=True
                 )
@@ -132,8 +141,6 @@ if not await client.is_user_authorized():
 
 
 if __name__ == "__main__":
-    import asyncio
-
     try:
         asyncio.run(main())
     except Exception as e:
