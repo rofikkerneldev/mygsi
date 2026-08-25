@@ -1,85 +1,70 @@
-def download_file(url, output_path, account_token, expected_size):
-    temp_path = output_path + ".part"
+name: Test GoFile Download
 
-    downloaded = 0
+on:
+  workflow_dispatch:
+    inputs:
+      gofile_link:
+        description: "GoFile download link"
+        required: true
+        type: string
 
-    if os.path.exists(temp_path):
-        downloaded = os.path.getsize(temp_path)
+jobs:
+  download:
+    runs-on: ubuntu-latest
 
-    headers = {
-        "User-Agent": "Mozilla/5.0",
-        "Accept": "*/*",
-        "Referer": "https://gofile.io/",
-        "Origin": "https://gofile.io",
-        "Cookie": f"accountToken={account_token}",
-    }
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
 
-    if downloaded > 0:
-        headers["Range"] = f"bytes={downloaded}-"
-        print(f"Resuming from {downloaded / 1024 / 1024:.2f} MB")
+      - name: Install Dependencies
+        run: |
+          python3 -m pip install --upgrade pip
+          python3 -m pip install requests
 
-    print(f"Downloading: {os.path.basename(output_path)}")
-    print(f"Expected size: {expected_size / 1024 / 1024:.2f} MB")
+      - name: Download GoFile
+        env:
+          GOFILE_LINK: ${{ inputs.gofile_link }}
+        run: |
+          rm -rf original_download
+          mkdir -p original_download
 
-    with requests.get(
-        url,
-        headers=headers,
-        stream=True,
-        timeout=(20, 60),
-    ) as response:
+          echo "======================================"
+          echo "GoFile URL:"
+          echo "$GOFILE_LINK"
+          echo "======================================"
 
-        if downloaded > 0:
-            if response.status_code != 206:
-                raise RuntimeError(
-                    f"Resume failed: HTTP {response.status_code}"
-                )
-        else:
-            if response.status_code != 200:
-                raise RuntimeError(
-                    f"Download failed: HTTP {response.status_code}"
-                )
+          python3 gofile_dl.py \
+            "$GOFILE_LINK" \
+            -o "original_download/firmware.zip"
 
-        content_type = response.headers.get(
-            "Content-Type", ""
-        )
+      - name: Show Downloaded Files
+        run: |
+          echo "======================================"
+          echo "Downloaded files:"
+          echo "======================================"
 
-        if "application/zip" not in content_type:
-            raise RuntimeError(
-                f"Unexpected Content-Type: {content_type}"
-            )
+          find original_download -type f -exec ls -lh {} \;
 
-        mode = "ab" if downloaded > 0 else "wb"
+          echo
+          echo "Disk usage:"
+          du -sh original_download
 
-        with open(temp_path, mode) as f:
-            for chunk in response.iter_content(
-                chunk_size=1024 * 1024
-            ):
-                if chunk:
-                    f.write(chunk)
-                    downloaded += len(chunk)
+      - name: Verify ZIP
+        run: |
+          FILE="original_download/firmware.zip"
 
-                    percent = (
-                        downloaded * 100 / expected_size
-                    )
+          if [ ! -f "$FILE" ]; then
+            echo "ERROR: firmware.zip not found!"
+            exit 1
+          fi
 
-                    print(
-                        f"\rProgress: "
-                        f"{percent:6.2f}% "
-                        f"({downloaded / 1024 / 1024:.2f} / "
-                        f"{expected_size / 1024 / 1024:.2f} MB)",
-                        end="",
-                        flush=True,
-                    )
+          echo "File:"
+          ls -lh "$FILE"
 
-    print()
+          echo
+          echo "File type:"
+          file "$FILE"
 
-    if downloaded != expected_size:
-        raise RuntimeError(
-            f"Size mismatch! "
-            f"Expected {expected_size}, "
-            f"got {downloaded}"
-        )
-
-    os.replace(temp_path, output_path)
-
-    print("Download verified successfully.")
+          echo
+          echo "ZIP test:"
+          unzip -t "$FILE"
