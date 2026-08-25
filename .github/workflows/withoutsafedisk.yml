@@ -181,11 +181,20 @@ jobs:
       # gofile_dl.py already gets the original filename.
       # We extract it from the JSON/API output through a helper
       # file if available.
-      if [[ -f gofile_filename.txt ]]; then
-        ORIGINAL_FILENAME=$(cat gofile_filename.txt)
-      else
-        ORIGINAL_FILENAME="firmware.zip"
-      fi
+
+      if [[ ! -f gofile_filename.txt ]]; then
+      echo "ERROR: GoFile filename metadata not found!"
+        exit 1
+     fi
+
+     ORIGINAL_FILENAME=$(cat gofile_filename.txt)
+
+     if [[ -z "$ORIGINAL_FILENAME" ]]; then
+       echo "ERROR: GoFile filename is empty!"
+       exit 1
+     fi
+
+     echo "Original filename: $ORIGINAL_FILENAME"
 
       echo "Original filename: $ORIGINAL_FILENAME"
 
