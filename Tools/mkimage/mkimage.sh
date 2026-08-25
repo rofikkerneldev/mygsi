@@ -52,33 +52,64 @@ mv "$TEMP_DIR/file_contexts.tmp" "$TEMP_DIR/file_contexts"
 # Remove unused Transsion mount points
 #########################################################
 
-echo "===== Checking Transsion mount points ====="
+echo "===== Checking Transsion / SoC mount points ====="
 
-find "$BASE_DIR" -maxdepth 2 \( -name "tranfs" -o -name "transfs" \) -print || true
+for path in \
+    "$BASE_DIR/tranfs" \
+    "$BASE_DIR/transfs" \
+    "$BASE_DIR/soccp_firmware"
+do
+    if [[ -e "$path" ]]; then
+        echo "FOUND: $path"
+    else
+        echo "MISSING: $path"
+    fi
+done
 
 rm -rf "$BASE_DIR/tranfs"
 rm -rf "$BASE_DIR/transfs"
+rm -rf "$BASE_DIR/soccp_firmware"
 
 echo "===== After cleanup ====="
 
-find "$BASE_DIR" -maxdepth 2 \( -name "tranfs" -o -name "transfs" \) -print || true
+for path in \
+    "$BASE_DIR/tranfs" \
+    "$BASE_DIR/transfs" \
+    "$BASE_DIR/soccp_firmware"
+do
+    if [[ -e "$path" ]]; then
+        echo "STILL EXISTS: $path"
+    else
+        echo "REMOVED/MISSING: $path"
+    fi
+done
+
 
 #########################################################
-# Remove unused Transsion SELinux contexts
+# Remove unused Transsion / SoC SELinux contexts
 #########################################################
 
 echo "===== SELinux contexts before cleanup ====="
-grep -nE '^/(transfs|tranfs)' "$TEMP_DIR/file_contexts" || true
 
-sed -i -E '\#^/(transfs|tranfs)#d' "$TEMP_DIR/file_contexts"
+grep -nE '^/(transfs|tranfs|soccp_firmware)(/|[[:space:]])' \
+    "$TEMP_DIR/file_contexts" || true
+
+echo "===== Removing unused SELinux contexts ====="
+
+sed -i -E '\#^/(transfs|tranfs|soccp_firmware)(/|[[:space:]])#d' \
+    "$TEMP_DIR/file_contexts"
 
 echo "===== SELinux contexts after cleanup ====="
-grep -nE '^/(transfs|tranfs)' "$TEMP_DIR/file_contexts" || true
+
+grep -nE '^/(transfs|tranfs|soccp_firmware)(/|[[:space:]])' \
+    "$TEMP_DIR/file_contexts" || true
+
 
 file_contexts="$TEMP_DIR/file_contexts"
 
 append_context() {
-    grep -qxF "$1" "$TEMP_DIR/file_contexts" || echo "$1" >> "$TEMP_DIR/file_contexts"
+    grep -qxF "$1" "$TEMP_DIR/file_contexts" || \
+        echo "$1" >> "$TEMP_DIR/file_contexts"
 }
 
 if [[ -f "$TEMP_DIR/file_contexts" ]]; then
