@@ -55,7 +55,7 @@ jobs:
           
       - name: Install Python Dependencies
         run: |
-          python3 -m pip install backports.lzma bsdiff4 twrpdtgen extract-dtb pycryptodome requests
+          python3 -m pip install backports.lzma bsdiff4 twrpdtgen extract-dtb pycryptodome requests telethon
       - name: Prepare and Clean URL
         id: prep
         run: |
@@ -77,237 +77,237 @@ jobs:
           echo "url=$LINK" >> "$GITHUB_OUTPUT"
 
       - name: Download Firmware
-  id: download
-  run: |
-    SOURCE="${{ inputs.source_type }}"
-    LINK="${{ steps.prep.outputs.url }}"
+        id: download
+        run: |
+         SOURCE="${{ inputs.source_type }}"
+         LINK="${{ steps.prep.outputs.url }}"
 
-    rm -rf original_download
-    mkdir -p original_download
+         rm -rf original_download
+         mkdir -p original_download
 
-    echo "======================================"
-    echo "Firmware Downloader"
-    echo "======================================"
-    echo "Source: $SOURCE"
-    echo "Link  : $LINK"
-    echo "======================================"
+         echo "======================================"
+         echo "Firmware Downloader"
+         echo "======================================"
+         echo "Source: $SOURCE"
+         echo "Link  : $LINK"
+         echo "======================================"
 
-    # ============================================================
-    # GOOGLE DRIVE
-    # ============================================================
-    if [[ "$SOURCE" == "Google Drive" ]]; then
+         # ============================================================
+         # GOOGLE DRIVE
+         # ============================================================
+         if [[ "$SOURCE" == "Google Drive" ]]; then
 
-      echo "Google Drive detected."
+           echo "Google Drive detected."
 
-      FILEID=""
+           FILEID=""
 
-      if [[ "$LINK" == *"drive.usercontent.google.com"* ]]; then
+           if [[ "$LINK" == *"drive.usercontent.google.com"* ]]; then
 
-        FILEID=$(python3 -c "
-        import urllib.parse
-        url = '''$LINK'''
-        query = urllib.parse.parse_qs(
-            urllib.parse.urlparse(url).query
-        )
-        print(query.get('id', [''])[0])
-        ")
+             FILEID=$(python3 -c "
+             import urllib.parse
+             url = '''$LINK'''
+             query = urllib.parse.parse_qs(
+                 urllib.parse.urlparse(url).query
+             )
+             print(query.get('id', [''])[0])
+             ")
 
               else
 
-        FILEID=$(echo "$LINK" \
+             FILEID=$(echo "$LINK" \
           | sed -n 's#.*file/d/\([^/?]*\).*#\1#p')
 
-        if [[ -z "$FILEID" ]]; then
-          FILEID=$(python3 -c "
-        import urllib.parse
-        url = '''$LINK'''
-        query = urllib.parse.parse_qs(
-            urllib.parse.urlparse(url).query
-        )
-        print(query.get('id', [''])[0])
-        ")
-        fi
+             if [[ -z "$FILEID" ]]; then
+               FILEID=$(python3 -c "
+             import urllib.parse
+             url = '''$LINK'''
+             query = urllib.parse.parse_qs(
+                 urllib.parse.urlparse(url).query
+             )
+             print(query.get('id', [''])[0])
+             ")
+            fi
 
-      fi
+           fi
 
-      if [[ -z "$FILEID" ]]; then
-        echo "ERROR: Cannot parse Google Drive File ID!"
-        echo "URL: $LINK"
-        exit 1
-      fi
+           if [[ -z "$FILEID" ]]; then
+             echo "ERROR: Cannot parse Google Drive File ID!"
+             echo "URL: $LINK"
+             exit 1
+                fi
 
-      echo "Google Drive File ID: $FILEID"
-      echo "Downloading with gdown..."
+           echo "Google Drive File ID: $FILEID"
+           echo "Downloading with gdown..."
 
-      cd original_download
+           cd original_download
 
-      gdown "$FILEID"
+           gdown "$FILEID"
 
-      DOWNLOADED_FILE=$(find . -maxdepth 1 -type f -print -quit)
+           DOWNLOADED_FILE=$(find . -maxdepth 1 -type f -print -quit)
 
-      if [[ -z "$DOWNLOADED_FILE" ]]; then
-        echo "ERROR: gdown did not download any file!"
-        exit 1
-      fi
+           if [[ -z "$DOWNLOADED_FILE" ]]; then
+             echo "ERROR: gdown did not download any file!"
+             exit 1
+           fi
 
-      ORIGINAL_FILENAME=$(basename "$DOWNLOADED_FILE")
+           ORIGINAL_FILENAME=$(basename "$DOWNLOADED_FILE")
 
-      echo "Original filename: $ORIGINAL_FILENAME"
+           echo "Original filename: $ORIGINAL_FILENAME"
 
-      cd ..
+           cd ..
 
-      mv \
-        "original_download/$ORIGINAL_FILENAME" \
-        firmware.zip
-
-
-    # ============================================================
-    # GOFILE
-    # ============================================================
-    elif [[ "$SOURCE" == "GoFile" ]]; then
-
-      echo "GoFile detected."
-      echo "Using custom GoFile downloader..."
-
-      python3 gofile_dl.py \
-        "$LINK" \
-        -o firmware.zip
-
-      if [[ ! -f firmware.zip ]]; then
-        echo "ERROR: GoFile downloader did not create firmware.zip!"
-        exit 1
-      fi
-
-      # gofile_dl.py already gets the original filename.
-      # We extract it from the JSON/API output through a helper
-      # file if available.
-
-      if [[ ! -f gofile_filename.txt ]]; then
-      echo "ERROR: GoFile filename metadata not found!"
-        exit 1
-     fi
-
-     ORIGINAL_FILENAME=$(cat gofile_filename.txt)
-
-     if [[ -z "$ORIGINAL_FILENAME" ]]; then
-       echo "ERROR: GoFile filename is empty!"
-       exit 1
-     fi
-
-     echo "Original filename: $ORIGINAL_FILENAME"
-
-      echo "Original filename: $ORIGINAL_FILENAME"
+           mv \
+             "original_download/$ORIGINAL_FILENAME" \
+             firmware.zip
 
 
-    # ============================================================
-    # TELEGRAM
-    # ============================================================
-    elif [[ "$SOURCE" == "Telegram" ]]; then
+         # ============================================================
+         # GOFILE
+         # ============================================================
+         elif [[ "$SOURCE" == "GoFile" ]]; then
 
-      echo "Telegram detected."
+           echo "GoFile detected."
+           echo "Using custom GoFile downloader..."
 
-      rm -rf Output
-      mkdir -p Output
+           python3 gofile_dl.py \
+             "$LINK" \
+             -o firmware.zip
 
-      TG_API_ID="${{ secrets.TG_API_ID }}" \
-      TG_API_HASH="${{ secrets.TG_API_HASH }}" \
-      TG_SESSION="${{ secrets.TG_SESSION }}" \
-      TELEGRAM_LINK="$LINK" \
-      python3 tg_dl.py
+           if [[ ! -f firmware.zip ]]; then
+             echo "ERROR: GoFile downloader did not create firmware.zip!"
+             exit 1
+           fi
 
-      DOWNLOADED_FILE=$(find Output -type f -print -quit)
+           # gofile_dl.py already gets the original filename.
+           # We extract it from the JSON/API output through a helper
+           # file if available.
 
-      if [[ -z "$DOWNLOADED_FILE" ]]; then
-        echo "ERROR: Telegram downloader did not produce a file!"
-        exit 1
-      fi
+           if [[ ! -f gofile_filename.txt ]]; then
+           echo "ERROR: GoFile filename metadata not found!"
+             exit 1
+          fi
 
-      ORIGINAL_FILENAME=$(basename "$DOWNLOADED_FILE")
+          ORIGINAL_FILENAME=$(cat gofile_filename.txt)
 
-      echo "Original filename: $ORIGINAL_FILENAME"
+          if [[ -z "$ORIGINAL_FILENAME" ]]; then
+            echo "ERROR: GoFile filename is empty!"
+            exit 1
+          fi
 
-      mv \
-        "$DOWNLOADED_FILE" \
-        firmware.zip
+          echo "Original filename: $ORIGINAL_FILENAME"
 
-
-    # ============================================================
-    # DIRECT URL
-    # ============================================================
-    elif [[ "$SOURCE" == "Direct URL" ]]; then
-
-      echo "Direct download detected."
-
-      ORIGINAL_FILENAME=$(curl -L -s -D - -o /dev/null "$LINK" \
-        | grep -i '^content-disposition:' \
-        | sed -n 's/.*filename\*=[^;]*'\'''\''\([^;]*\).*/\1/p' \
-        | sed 's/\r$//' \
-        | python3 -c '
-import sys
-import urllib.parse
-
-x = sys.stdin.read().strip()
-print(urllib.parse.unquote(x))
-' || true)
-
-      if [[ -z "$ORIGINAL_FILENAME" ]]; then
-        ORIGINAL_FILENAME=$(basename "${LINK%%\?*}")
-      fi
-
-      ORIGINAL_FILENAME=$(python3 -c "
-import urllib.parse
-print(urllib.parse.unquote('''$ORIGINAL_FILENAME'''))
-")
-
-      echo "Original filename: $ORIGINAL_FILENAME"
-
-      wget \
-        --progress=bar:force:noscroll \
-        -O firmware.zip \
-        "$LINK"
+           echo "Original filename: $ORIGINAL_FILENAME"
 
 
-    else
+         # ============================================================
+         # TELEGRAM
+         # ============================================================
+         elif [[ "$SOURCE" == "Telegram" ]]; then
 
-      echo "ERROR: Unknown source type: $SOURCE"
-      exit 1
+           echo "Telegram detected."
 
-    fi
+           rm -rf Output
+           mkdir -p Output
+
+           TG_API_ID="${{ secrets.TG_API_ID }}" \
+           TG_API_HASH="${{ secrets.TG_API_HASH }}" \
+           TG_SESSION="${{ secrets.TG_SESSION }}" \
+           TELEGRAM_LINK="$LINK" \
+           python3 tg_dl.py
+
+           DOWNLOADED_FILE=$(find Output -type f -print -quit)
+
+           if [[ -z "$DOWNLOADED_FILE" ]]; then
+             echo "ERROR: Telegram downloader did not produce a file!"
+             exit 1
+           fi
+
+           ORIGINAL_FILENAME=$(basename "$DOWNLOADED_FILE")
+
+           echo "Original filename: $ORIGINAL_FILENAME"
+
+           mv \
+             "$DOWNLOADED_FILE" \
+             firmware.zip
+
+     
+         # ============================================================
+         # DIRECT URL
+         # ============================================================
+         elif [[ "$SOURCE" == "Direct URL" ]]; then
+
+           echo "Direct download detected."
+
+           ORIGINAL_FILENAME=$(curl -L -s -D - -o /dev/null "$LINK" \
+             | grep -i '^content-disposition:' \
+             | sed -n 's/.*filename\*=[^;]*'\'''\''\([^;]*\).*/\1/p' \
+             | sed 's/\r$//' \
+             | python3 -c '
+              import sys
+         import urllib.parse
+
+         x = sys.stdin.read().strip()
+         print(urllib.parse.unquote(x))
+         ' || true)
+
+           if [[ -z "$ORIGINAL_FILENAME" ]]; then
+             ORIGINAL_FILENAME=$(basename "${LINK%%\?*}")
+           fi
+
+           ORIGINAL_FILENAME=$(python3 -c "
+         import urllib.parse
+         print(urllib.parse.unquote('''$ORIGINAL_FILENAME'''))
+         ")
+
+           echo "Original filename: $ORIGINAL_FILENAME"
+
+           wget \
+             --progress=bar:force:noscroll \
+             -O firmware.zip \
+             "$LINK"
 
 
-    # ============================================================
-    # RESULT
-    # ============================================================
+         else
 
-    if [[ ! -f firmware.zip ]]; then
-      echo "ERROR: firmware.zip was not created!"
-      exit 1
-    fi
+           echo "ERROR: Unknown source type: $SOURCE"
+           exit 1
 
-    FILE_SIZE=$(stat -c%s firmware.zip)
+         fi
 
-    echo "======================================"
-    echo "Download complete"
-    echo "======================================"
-    echo "Source           : $SOURCE"
-    echo "Original firmware: $ORIGINAL_FILENAME"
-    echo "Saved locally as : firmware.zip"
-    echo "File size        : $FILE_SIZE bytes"
-    echo "======================================"
 
-    if [[ "$FILE_SIZE" -eq 0 ]]; then
-      echo "ERROR: firmware.zip is empty!"
-      exit 1
-    fi
+         # ============================================================
+         # RESULT
+         # ============================================================
 
-    # Prevent accidentally continuing with HTML
-    if file firmware.zip | grep -qiE 'HTML|text'; then
-      echo "ERROR: Downloaded file appears to be HTML!"
-      file firmware.zip
-      exit 1
-    fi
+         if [[ ! -f firmware.zip ]]; then
+           echo "ERROR: firmware.zip was not created!"
+           exit 1
+         fi
 
-    echo "original_filename=$ORIGINAL_FILENAME" >> "$GITHUB_OUTPUT"
+         FILE_SIZE=$(stat -c%s firmware.zip)
+
+         echo "======================================"
+         echo "Download complete"
+         echo "======================================"
+         echo "Source           : $SOURCE"
+         echo "Original firmware: $ORIGINAL_FILENAME"
+         echo "Saved locally as : firmware.zip"
+         echo "File size        : $FILE_SIZE bytes"
+         echo "======================================"
+
+         if [[ "$FILE_SIZE" -eq 0 ]]; then
+           echo "ERROR: firmware.zip is empty!"
+           exit 1
+         fi
+
+         # Prevent accidentally continuing with HTML
+         if file firmware.zip | grep -qiE 'HTML|text'; then
+           echo "ERROR: Downloaded file appears to be HTML!"
+           file firmware.zip
+           exit 1
+         fi
+
+         echo "original_filename=$ORIGINAL_FILENAME" >> "$GITHUB_OUTPUT"
           
       - name: Make all scripts executable
         run: |
