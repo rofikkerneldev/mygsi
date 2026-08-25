@@ -46,14 +46,20 @@ async def main():
 
     os.makedirs(OUTPUT_DIR, exist_ok=True)
 
-    client = TelegramClient(
-        "github_actions_session",
-        API_ID,
-        API_HASH
-    )
+    from telethon.sessions import StringSession
 
-    await client.start()
+SESSION = os.environ["TG_SESSION"]
 
+client = TelegramClient(
+    StringSession(SESSION),
+    API_ID,
+    API_HASH
+)
+
+await client.connect()
+
+if not await client.is_user_authorized():
+    raise RuntimeError("Telegram session tidak valid atau sudah expired")
     try:
         print("Getting Telegram message...")
 
