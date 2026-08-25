@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-//Copyright 2026 RofikKernelDev
+#Copyright 2026 RofikKernelDev
 import argparse
 import hashlib
 import os
