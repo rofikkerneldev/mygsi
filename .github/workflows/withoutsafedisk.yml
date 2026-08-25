@@ -8,10 +8,10 @@ on:
         required: true
         type: choice
         options:
+          - Direct URL
           - Google Drive
           - GoFile
           - Telegram
-          - Direct URL
           
       firmware_link:
         description: 'Firmware Link'
