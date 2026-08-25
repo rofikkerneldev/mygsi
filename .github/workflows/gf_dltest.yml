@@ -1,0 +1,53 @@
+name: Test GoFile Download
+
+on:
+  workflow_dispatch:
+    inputs:
+      gofile_link:
+        description: "GoFile download link"
+        required: true
+        type: string
+
+jobs:
+  download:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Install Dependencies
+        run: |
+          python3 -m pip install --upgrade pip
+          python3 -m pip install gofile-dl
+
+      - name: Download GoFile
+        env:
+          GOFILE_API_KEY: ${{ secrets.GOFILE_API_KEY }}
+          GOFILE_LINK: ${{ inputs.gofile_link }}
+        run: |
+          rm -rf original_download
+          mkdir -p original_download
+
+          echo "======================================"
+          echo "GoFile URL:"
+          echo "$GOFILE_LINK"
+          echo "======================================"
+
+          gofile-dl \
+            --output-dir original_download \
+            --token "$GOFILE_API_KEY" \
+            --verbose \
+            "$GOFILE_LINK"
+
+      - name: Show Downloaded Files
+        run: |
+          echo "======================================"
+          echo "Downloaded files:"
+          echo "======================================"
+
+          find original_download -type f -exec ls -lh {} \;
+
+          echo
+          echo "Disk usage:"
+          du -sh original_download
