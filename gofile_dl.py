@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-
+//Copyright 2026 RofikKernelDev
 import argparse
 import hashlib
 import os
@@ -513,6 +513,10 @@ def main():
     expected_size = int(file["size"])
     expected_md5 = file.get("md5")
 
+    # Save original filename for GitHub Actions
+with open("gofile_filename.txt", "w", encoding="utf-8") as f:
+    f.write(filename)
+    
     print()
     print(f"Selected file: {filename}")
     print(f"Size         : {format_size(expected_size)}")
