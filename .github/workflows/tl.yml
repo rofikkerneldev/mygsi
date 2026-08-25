@@ -27,6 +27,7 @@ jobs:
         env:
           TG_API_ID: ${{ secrets.TG_API_ID }}
           TG_API_HASH: ${{ secrets.TG_API_HASH }}
+          TG_SESSION: ${{ secrets.TG_SESSION }}
           TELEGRAM_LINK: ${{ inputs.telegram_link }}
         run: |
           mkdir -p Output
