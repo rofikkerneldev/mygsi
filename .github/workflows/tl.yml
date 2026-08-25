@@ -1,0 +1,55 @@
+name: TG to GoFile
+
+on:
+  workflow_dispatch:
+    inputs:
+      telegram_link:
+        description: "Public Telegram file link"
+        required: true
+        type: string
+
+jobs:
+  mirror:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v4
+
+      - name: Install Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y jq curl
+          python3 -m pip install --upgrade pip
+          pip3 install telethon
+
+      - name: Download Telegram File
+        env:
+          TG_API_ID: ${{ secrets.TG_API_ID }}
+          TG_API_HASH: ${{ secrets.TG_API_HASH }}
+          TELEGRAM_LINK: ${{ inputs.telegram_link }}
+        run: |
+          mkdir -p Output
+          python3 telegram_download.py
+
+      - name: Show Downloaded File
+        run: |
+          echo "=== Output ==="
+          ls -lah Output
+
+      - name: Upload to GoFile
+        env:
+          GOFILE_API_KEY: ${{ secrets.GOFILE_API_KEY }}
+        run: |
+          chmod +x uploadgofile.sh
+
+          FILE=$(find Output -type f -print -quit)
+
+          if [ -z "$FILE" ]; then
+            echo "ERROR: No downloaded file!"
+            exit 1
+          fi
+
+          echo "Uploading: $FILE"
+
+          bash uploadgofile.sh "$FILE"
