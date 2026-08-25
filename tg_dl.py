@@ -1,3 +1,4 @@
+//Copyright 2026 RofikKernelDev
 import os
 import sys
 import asyncio
