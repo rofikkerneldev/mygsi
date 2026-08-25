@@ -512,9 +512,8 @@ def main():
     download_url = file["link"]
     expected_size = int(file["size"])
     expected_md5 = file.get("md5")
-
     # Save original filename for GitHub Actions
-with open("gofile_filename.txt", "w", encoding="utf-8") as f:
+    with open("gofile_filename.txt", "w", encoding="utf-8") as f:
     f.write(filename)
     
     print()
