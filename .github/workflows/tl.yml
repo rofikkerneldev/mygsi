@@ -30,7 +30,7 @@ jobs:
           TELEGRAM_LINK: ${{ inputs.telegram_link }}
         run: |
           mkdir -p Output
-          python3 telegram_download.py
+          python3 tg_dl.py
 
       - name: Show Downloaded File
         run: |
