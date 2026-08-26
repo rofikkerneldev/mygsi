@@ -231,49 +231,44 @@ jobs:
              firmware.zip
 
      
-         # ============================================================
-         # DIRECT URL
-         # ============================================================
-         elif [[ "$SOURCE" == "Direct URL" ]]; then
+          # ============================================================
+          # DIRECT URL
+          # ============================================================
+          elif [[ "$SOURCE" == "Direct URL" ]]; then
 
-           echo "Direct download detected."
+          echo "Direct download detected."
 
-           ORIGINAL_FILENAME=$(curl -L -s -D - -o /dev/null "$LINK" \
-             | grep -i '^content-disposition:' \
-             | sed -n 's/.*filename\*=[^;]*'\'''\''\([^;]*\).*/\1/p' \
-             | sed 's/\r$//' \
-             | python3 -c '
-              import sys
-         import urllib.parse
+         # Try to get filename from Content-Disposition
+         ORIGINAL_FILENAME=$(curl -L -s -D - -o /dev/null "$LINK" \
+         | grep -i '^content-disposition:' \
+         | sed -n "s/.*filename\*=[^;]*''\([^;]*\).*/\1/p" \
+         | sed 's/\r$//' \
+         || true)
 
-         x = sys.stdin.read().strip()
-         print(urllib.parse.unquote(x))
-         ' || true)
-
-           if [[ -z "$ORIGINAL_FILENAME" ]]; then
-             ORIGINAL_FILENAME=$(basename "${LINK%%\?*}")
-           fi
-
-           ORIGINAL_FILENAME=$(python3 -c "
-         import urllib.parse
-         print(urllib.parse.unquote('''$ORIGINAL_FILENAME'''))
-         ")
-
-           echo "Original filename: $ORIGINAL_FILENAME"
-
-           wget \
-             --progress=bar:force:noscroll \
-             -O firmware.zip \
-             "$LINK"
-
-
-         else
-
-           echo "ERROR: Unknown source type: $SOURCE"
-           exit 1
-
+         # Fallback to filename from URL
+         if [[ -z "$ORIGINAL_FILENAME" ]]; then
+         ORIGINAL_FILENAME=$(basename "${LINK%%\?*}")
          fi
 
+         # URL decode filename using Python safely
+         ORIGINAL_FILENAME=$(python3 -c 'import sys, urllib.parse; print(urllib.parse.unquote(sys.argv[1]))' "$ORIGINAL_FILENAME")
+
+         if [[ -z "$ORIGINAL_FILENAME" || "$ORIGINAL_FILENAME" == "." ]]; then
+         ORIGINAL_FILENAME="firmware.zip"
+         fi
+
+         echo "Original filename: $ORIGINAL_FILENAME"
+
+         wget \
+         --progress=bar:force:noscroll \
+         -O firmware.zip \
+         "$LINK"
+     
+         else
+         echo "ERROR: Unknown source type: $SOURCE"
+         exit 1
+
+         fi
 
          # ============================================================
          # RESULT
