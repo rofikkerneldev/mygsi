@@ -1,0 +1,59 @@
+name: Wget to GoFile
+
+on:
+  workflow_dispatch:
+    inputs:
+      file_url:
+        description: "Direct file URL"
+        required: true
+        type: string
+
+jobs:
+  mirror:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v4
+
+      - name: Install Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y wget jq curl
+
+      - name: Download File
+        env:
+          FILE_URL: ${{ inputs.file_url }}
+        run: |
+          mkdir -p Output
+
+          echo "Downloading:"
+          echo "$FILE_URL"
+
+          wget \
+            --content-disposition \
+            --trust-server-names \
+            -P Output \
+            "$FILE_URL"
+
+      - name: Show Downloaded File
+        run: |
+          echo "=== Output ==="
+          ls -lah Output
+
+      - name: Upload to GoFile
+        env:
+          GOFILE_API_KEY: ${{ secrets.GOFILE_API_KEY }}
+        run: |
+          chmod +x uploadgofile.sh
+
+          FILE=$(find Output -type f -print -quit)
+
+          if [ -z "$FILE" ]; then
+            echo "ERROR: No downloaded file!"
+            exit 1
+          fi
+
+          echo "Uploading: $FILE"
+
+          bash uploadgofile.sh "$FILE"
