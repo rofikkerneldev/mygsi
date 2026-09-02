@@ -19,7 +19,7 @@ usage() {
 supported_roms() {
     echo "Available ROMs:"
     echo ""
-    declare -a versions=(11 12 12.1 13 14 15)
+    declare -a versions=(10 11 12 12.1 13 14 15 16 17)
     for version in "${versions[@]}"; do
         rom_dir="ROMsPatches/$version"
         if [ -d "$rom_dir" ]; then
@@ -58,6 +58,12 @@ if [ -z "$SDK_VERSION" ] || ! [[ "$SDK_VERSION" =~ ^[0-9]+$ ]]; then
 fi
 
 case "$SDK_VERSION" in
+  29)
+    android_version="10"
+    ;;
+  30)
+    android_version="11"
+    ;;
   31)
     android_version="12"
     ;;
