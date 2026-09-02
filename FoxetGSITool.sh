@@ -58,6 +58,12 @@ if [ -z "$SDK_VERSION" ] || ! [[ "$SDK_VERSION" =~ ^[0-9]+$ ]]; then
 fi
 
 case "$SDK_VERSION" in
+  29)
+    android_version="10"
+    ;;
+  30)
+    android_version="11"
+    ;;
   31)
     android_version="12"
     ;;
