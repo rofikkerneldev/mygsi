@@ -58,6 +58,7 @@ for path in \
     "$BASE_DIR/tranfs" \
     "$BASE_DIR/transfs" \
     "$BASE_DIR/eri" \
+    "$BASE_DIR/persdata" \
     "$BASE_DIR/soccp_firmware"
 do
     if [[ -e "$path" ]]; then
@@ -70,6 +71,7 @@ done
 rm -rf "$BASE_DIR/tranfs"
 rm -rf "$BASE_DIR/transfs"
 rm -rf "$BASE_DIR/eri"
+rm -rf "$BASE_DIR/persdata"
 rm -rf "$BASE_DIR/soccp_firmware"
 
 echo "===== After cleanup ====="
@@ -78,6 +80,7 @@ for path in \
     "$BASE_DIR/tranfs" \
     "$BASE_DIR/transfs" \
     "$BASE_DIR/eri" \
+    "$BASE_DIR/persdata" \
     "$BASE_DIR/soccp_firmware"
 do
     if [[ -e "$path" ]]; then
