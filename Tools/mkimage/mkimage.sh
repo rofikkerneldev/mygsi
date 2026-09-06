@@ -48,67 +48,6 @@ awk '!seen[$0]++' "$TEMP_DIR/file_contexts" > "$TEMP_DIR/file_contexts.tmp"
 mv "$TEMP_DIR/file_contexts.tmp" "$TEMP_DIR/file_contexts"
 
 
-#########################################################
-# Remove unused Transsion mount points
-#########################################################
-
-echo "===== Checking Transsion / SoC mount points ====="
-
-for path in \
-    "$BASE_DIR/tranfs" \
-    "$BASE_DIR/transfs" \
-    "$BASE_DIR/eri" \
-    "$BASE_DIR/persdata" \
-    "$BASE_DIR/soccp_firmware"
-do
-    if [[ -e "$path" ]]; then
-        echo "FOUND: $path"
-    else
-        echo "MISSING: $path"
-    fi
-done
-
-rm -rf "$BASE_DIR/tranfs"
-rm -rf "$BASE_DIR/transfs"
-rm -rf "$BASE_DIR/eri"
-rm -rf "$BASE_DIR/persdata"
-rm -rf "$BASE_DIR/soccp_firmware"
-
-echo "===== After cleanup ====="
-
-for path in \
-    "$BASE_DIR/tranfs" \
-    "$BASE_DIR/transfs" \
-    "$BASE_DIR/eri" \
-    "$BASE_DIR/persdata" \
-    "$BASE_DIR/soccp_firmware"
-do
-    if [[ -e "$path" ]]; then
-        echo "STILL EXISTS: $path"
-    else
-        echo "REMOVED/MISSING: $path"
-    fi
-done
-
-
-#########################################################
-# Remove unused Transsion / SoC SELinux contexts
-#########################################################
-
-echo "===== SELinux contexts before cleanup ====="
-
-grep -nE '^/(transfs|tranfs|soccp_firmware)(/|[[:space:]])' \
-    "$TEMP_DIR/file_contexts" || true
-
-echo "===== Removing unused SELinux contexts ====="
-
-sed -i -E '\#^/(transfs|tranfs|soccp_firmware)(/|[[:space:]])#d' \
-    "$TEMP_DIR/file_contexts"
-
-echo "===== SELinux contexts after cleanup ====="
-
-grep -nE '^/(transfs|tranfs|soccp_firmware)(/|[[:space:]])' \
-    "$TEMP_DIR/file_contexts" || true
 
 
 file_contexts="$TEMP_DIR/file_contexts"
@@ -178,6 +117,12 @@ if [[ -f "$TEMP_DIR/file_contexts" ]]; then
     append_context "/my_stock(/.*)?         u:object_r:rootfs:s0"
     append_context "/special_preload        u:object_r:rootfs:s0"
     append_context "/blackbox               u:object_r:rootfs:s0"
+    append_context "/eri(/.*)?              u:object_r:rootfs:s0"
+    append_context "/persdata(/.*)?         u:object_r:rootfs:s0"
+    append_context "/vzw(/.*)?              u:object_r:rootfs:s0"
+    append_context "/tranfs(/.*)?         u:object_r:rootfs:s0"
+    append_context "/transfs(/.*)?         u:object_r:rootfs:s0"
+    append_context "/soccp_firmware(/.*)?         u:object_r:rootfs:s0"
 
     file_contexts="$TEMP_DIR/file_contexts"
 fi
