@@ -96,6 +96,17 @@ for partition in $partitions; do
         else
             sudo mount "UnpackedROMs/$partition.img" "UnpackedROMs/temp_mount"
         fi
+       if [ "$partition" = "system" ]; then
+    echo "===== ORIGINAL SYSTEM IMAGE SYMLINK CHECK ====="
+
+    sudo ls -ld \
+        "UnpackedROMs/temp_mount/etc" \
+        "UnpackedROMs/temp_mount/system/product" \
+        "UnpackedROMs/temp_mount/system/system_ext" \
+        2>/dev/null
+
+    echo "etc -> $(sudo readlink "UnpackedROMs/temp_mount/etc" 2>/dev/null)"
+fi
        sudo cp -a "UnpackedROMs/temp_mount/." "UnpackedROMs/$partition/"
 sudo chown -R $USER:$USER "UnpackedROMs/$partition"
         sudo umount -R "UnpackedROMs/temp_mount"
