@@ -331,6 +331,35 @@ jobs:
 
           mv "Output/system.zip" "$OUTPUT_FILE"
 
+          # Upload generated GSI ZIP
+          echo "======================================"
+          echo "Uploading generated GSI"
+          echo "======================================"
           bash uploadgofile.sh "$OUTPUT_FILE"
+
+          # Upload ODM image from UnpackedROMs
+          ODM_FILE="UnpackedROMs/odm.img"
+
+          echo "======================================"
+          echo "Preparing ODM upload"
+          echo "======================================"
+          echo "ODM image: $ODM_FILE"
+
+          if [[ ! -f "$ODM_FILE" ]]; then
+            echo "ERROR: ODM image not found: $ODM_FILE"
+            exit 1
+          fi
+
+          if [[ ! -s "$ODM_FILE" ]]; then
+            echo "ERROR: ODM image is empty: $ODM_FILE"
+            exit 1
+          fi
+
+          echo "ODM size: $(stat -c%s "$ODM_FILE") bytes"
+
+          echo "======================================"
+          echo "Uploading ODM image"
+          echo "======================================"
+          bash uploadgofile.sh "$ODM_FILE"
         
           
