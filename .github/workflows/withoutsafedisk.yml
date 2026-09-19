@@ -361,5 +361,109 @@ jobs:
           echo "Uploading ODM image"
           echo "======================================"
           bash uploadgofile.sh "$ODM_FILE"
+      
+           # Upload vendor image from UnpackedROMs
+          VENDOR_FILE="UnpackedROMs/vendor.img"
+
+          echo "======================================"
+          echo "Preparing vendor upload"
+          echo "======================================"
+          echo "VENDOR image: $VENDOR_FILE"
+
+          if [[ ! -f "$VENDOR_FILE" ]]; then
+            echo "ERROR: vendor image not found: $VENDOR_FILE"
+            exit 1
+          fi
+
+          if [[ ! -s "$VENDOR_FILE" ]]; then
+            echo "ERROR: ODM image is empty: $VENDOR_FILE"
+            exit 1
+          fi
+
+          echo "VENDOR size: $(stat -c%s "$VENDOR_FILE") bytes"
+
+          echo "======================================"
+          echo "Uploading image"
+          echo "======================================"
+          bash uploadgofile.sh "$VENDOR_FILE"
+
+          ###############################
+          ###############################
+           # Upload image from UnpackedROMs
+          OPTICS_FILE="UnpackedROMs/optics.img"
+
+          echo "======================================"
+          echo "Preparing vendor upload"
+          echo "======================================"
+          echo "VENDOR image: $OPTICS_FILE"
+
+          if [[ ! -f "$OPTICS_FILE" ]]; then
+            echo "ERROR: image not found: $OPTICS_FILE"
+            exit 1
+          fi
+
+          if [[ ! -s "$OPTICS_FILE" ]]; then
+            echo "ERROR: image is empty: $OPTICS_FILE"
+            exit 1
+          fi
+
+          echo " size: $(stat -c%s "$OPTICS_FILE") bytes"
+
+          echo "======================================"
+          echo "Uploading image"
+          echo "======================================"
+          bash uploadgofile.sh "$OPTICS_FILE"
+          ##############################
+           # Upload image from UnpackedROMs
+          PRISM_FILE="UnpackedROMs/prism.img"
+
+          echo "======================================"
+          echo "Preparing vendor upload"
+          echo "======================================"
+          echo "VENDOR image: $PRISM_FILE"
+
+          if [[ ! -f "$PRISM_FILE" ]]; then
+            echo "ERROR: image not found: $PRISM_FILE"
+            exit 1
+          fi
+
+          if [[ ! -s "$PRISM_FILE" ]]; then
+            echo "ERROR: image is empty: $PRISM_FILE"
+            exit 1
+          fi
+
+          echo " size: $(stat -c%s "$PRISM_FILE") bytes"
+
+          echo "======================================"
+          echo "Uploading image"
+          echo "======================================"
+          bash uploadgofile.sh "$PRISM_FILE"
+
+          ###############################
+          #################
+           # Upload image from UnpackedROMs
+          MI_EXT_FILE="UnpackedROMs/mi_ext.img"
+
+          echo "======================================"
+          echo "Preparing  upload"
+          echo "======================================"
+          echo " image: $MI_EXT_FILE"
+
+          if [[ ! -f "$MI_EXT_FILE" ]]; then
+            echo "ERROR: image not found: $MI_EXT_FILE"
+            exit 1
+          fi
+
+          if [[ ! -s "$MI_EXT_FILE" ]]; then
+            echo "ERROR: image is empty: $MI_EXT_FILE"
+            exit 1
+          fi
+
+          echo " size: $(stat -c%s "$MI_EXT_FILE") bytes"
+
+          echo "======================================"
+          echo "Uploading image"
+          echo "======================================"
+          bash uploadgofile.sh "$MI_EXT_FILE"
         
           
