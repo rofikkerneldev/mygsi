@@ -23,6 +23,14 @@ on:
           - mi_ext
           - optics
           - prism
+          - my_bigball
+          - my_engineering
+          - my_manifest
+          - my_region
+          - my_carrier
+          - my_heytap
+          - my_product
+          - my_stock
 
 jobs:
   RofikKernelDev:
