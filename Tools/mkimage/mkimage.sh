@@ -123,7 +123,7 @@ if [[ -f "$TEMP_DIR/file_contexts" ]]; then
     append_context "/tranfs(/.*)?         u:object_r:rootfs:s0"
     append_context "/transfs(/.*)?         u:object_r:rootfs:s0"
     append_context "/soccp_firmware(/.*)?         u:object_r:rootfs:s0"
-
+    append_context "/ai_model_vendor(/.*)?         u:object_r:rootfs:s0"
     file_contexts="$TEMP_DIR/file_contexts"
 fi
 
