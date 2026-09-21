@@ -124,6 +124,14 @@ if [[ -f "$TEMP_DIR/file_contexts" ]]; then
     append_context "/transfs(/.*)?         u:object_r:rootfs:s0"
     append_context "/soccp_firmware(/.*)?         u:object_r:rootfs:s0"
     append_context "/ai_model_vendor(/.*)?         u:object_r:rootfs:s0"
+    append_context "/ai_model(/.*)?         u:object_r:rootfs:s0"
+    append_context "/3dmodem(/.*)?         u:object_r:rootfs:s0"
+    append_context "/3rdmodemnvm(/.*)?         u:object_r:rootfs:s0"
+    append_context "/3rdmodemnvmbkp(/.*)?         u:object_r:rootfs:s0"
+    append_context "/preavs(/.*)?         u:object_r:rootfs:s0"
+    append_context "/preload(/.*)?         u:object_r:rootfs:s0"
+    append_context "/splash2(/.*)?         u:object_r:rootfs:s0"
+    append_context "/patch_hn(/.*)?         u:object_r:rootfs:s0"
     file_contexts="$TEMP_DIR/file_contexts"
 fi
 
