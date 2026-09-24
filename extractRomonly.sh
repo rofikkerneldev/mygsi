@@ -12,7 +12,7 @@ ROM_TYPE=$2
 rm -rf Tools/Firmware_extractor
 
 git clone --depth=1 --recurse-submodules \
-    https://github.com/erfanoabdi/Firmware_extractor.git \
+    https://github.com/rofikkerneldev/own_extractor.git \
     Tools/Firmware_extractor
 partitions="
 vendor
