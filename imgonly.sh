@@ -27,6 +27,13 @@ tr_overlayfs
 tr_preload
 tr_product
 tr_region
+
+preas
+preavs
+preload
+product_h
+patch_hn
+cust
 "
 
 usage() {
