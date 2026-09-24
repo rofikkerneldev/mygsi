@@ -347,12 +347,12 @@ jobs:
 
           if [[ ! -f "$ODM_FILE" ]]; then
             echo "ERROR: ODM image not found: $ODM_FILE"
-             return 0
+             echo "Skipping upload."
           fi
 
           if [[ ! -s "$ODM_FILE" ]]; then
             echo "ERROR: ODM image is empty: $ODM_FILE"
-             return 0
+             echo "Skipping upload."
           fi
 
           echo "ODM size: $(stat -c%s "$ODM_FILE") bytes"
@@ -372,12 +372,12 @@ jobs:
 
           if [[ ! -f "$VENDOR_FILE" ]]; then
             echo "ERROR: vendor image not found: $VENDOR_FILE"
-             return 0
+              echo "Skipping upload."
           fi
 
           if [[ ! -s "$VENDOR_FILE" ]]; then
             echo "ERROR: ODM image is empty: $VENDOR_FILE"
-             return 0
+             echo "Skipping upload."
           fi
 
           echo "VENDOR size: $(stat -c%s "$VENDOR_FILE") bytes"
@@ -399,12 +399,12 @@ jobs:
 
           if [[ ! -f "$OPTICS_FILE" ]]; then
             echo "ERROR: image not found: $OPTICS_FILE"
-             return 0
+            echo "Skipping upload."
           fi
 
           if [[ ! -s "$OPTICS_FILE" ]]; then
             echo "ERROR: image is empty: $OPTICS_FILE"
-            return 0
+            echo "Skipping upload."
           fi
 
           echo " size: $(stat -c%s "$OPTICS_FILE") bytes"
@@ -424,7 +424,7 @@ jobs:
 
           if [[ ! -f "$PRISM_FILE" ]]; then
             echo "ERROR: image not found: $PRISM_FILE"
-             return 0
+             echo "Skipping upload."
           fi
 
           if [[ ! -s "$PRISM_FILE" ]]; then
@@ -451,12 +451,12 @@ jobs:
 
           if [[ ! -f "$MI_EXT_FILE" ]]; then
             echo "ERROR: image not found: $MI_EXT_FILE"
-            return 0
+            echo "Skipping upload."
           fi
 
           if [[ ! -s "$MI_EXT_FILE" ]]; then
             echo "ERROR: image is empty: $MI_EXT_FILE"
-             return 0
+             echo "Skipping upload."
           fi
 
           echo " size: $(stat -c%s "$MI_EXT_FILE") bytes"
@@ -466,4 +466,29 @@ jobs:
           echo "======================================"
           bash uploadgofile.sh "$MI_EXT_FILE"
         
-          
+                 ###############################
+          #################
+           # Upload image from UnpackedROMs
+          CUST_EXT_FILE="UnpackedROMs/cust.img"
+
+          echo "======================================"
+          echo "Preparing  upload"
+          echo "======================================"
+          echo " image: $CUST_EXT_FILE"
+
+          if [[ ! -f "$CUST_EXT_FILE" ]]; then
+            echo "ERROR: image not found: $CUST_EXT_FILE"
+            echo "Skipping upload."
+          fi
+
+          if [[ ! -s "$CUST_EXT_FILE" ]]; then
+            echo "ERROR: image is empty: $CUST_EXT_FILE"
+             echo "Skipping upload."
+          fi
+
+          echo " size: $(stat -c%s "$CUST_EXT_FILE") bytes"
+
+          echo "======================================"
+          echo "Uploading image"
+          echo "======================================"
+          bash uploadgofile.sh "$CUST_EXT_FILE"
