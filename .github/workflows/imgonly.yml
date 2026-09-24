@@ -31,6 +31,12 @@ on:
           - my_heytap
           - my_product
           - my_stock
+          - preas
+          - preavs
+          - preload
+          - product_h
+          - patch_hn
+          - cust
 
 jobs:
   RofikKernelDev:
