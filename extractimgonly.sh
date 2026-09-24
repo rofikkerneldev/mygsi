@@ -13,7 +13,7 @@ TARGET_PARTITION=$2
 rm -rf Tools/Firmware_extractor
 
 git clone --depth=1 --recurse-submodules \
-    https://github.com/erfanoabdi/Firmware_extractor.git \
+    https://github.com/rofikkerneldev/own_extractor.git \
     Tools/Firmware_extractor
     
 #partitions="vendor system system_ext product optics prism mi_ext my_bigball my_engineering my_manifest my_region my_carrier my_heytap my_product my_stock"
