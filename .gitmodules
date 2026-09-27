@@ -1,3 +1,3 @@
 [submodule "Tools/Firmware_extractor"]
 	path = Tools/Firmware_extractor
-	url = https://github.com/erfanoabdi/Firmware_extractor.git
+	url = https://github.com/rofikkerneldev/own_extractor.git
