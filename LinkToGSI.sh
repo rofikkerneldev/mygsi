@@ -36,6 +36,9 @@ preload
 product_h
 patch_hn
 cust
+vgc
+oem
+dyn
 "
 rm -rf Tools/Firmware_extractor
 
