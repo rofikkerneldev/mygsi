@@ -56,7 +56,7 @@ jobs:
           
       - name: Install Python Dependencies
         run: |
-          python3 -m pip install backports.lzma bsdiff4 twrpdtgen extract-dtb pycryptodome requests telethon
+          python3 -m pip install backports.lzma bsdiff4 twrpdtgen extract-dtb pycryptodome requests telethon zstandard
       - name: Prepare and Clean URL
         id: prep
         run: |
