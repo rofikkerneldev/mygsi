@@ -29,7 +29,7 @@ on:
           - HMD
           - OneUI
           - HiOS
-          - Vivo
+          - vivo
 
 jobs:
   RofikKernelDev:
