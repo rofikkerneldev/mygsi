@@ -94,7 +94,87 @@ else
     wget -P "DownloadedROMs/" "$ROM_LINK"
     Tools/Firmware_extractor/extractor.sh "DownloadedROMs/"* "UnpackedROMs/"
 fi
+# ============================================================
+# VIVO EXTRA IMAGE DECOMPRESSION
+# Vivo firmware payload images have an additional ZSTD wrapper.
+# Run ONLY when ROM_TYPE is Vivo.
+# ============================================================
 
+if [[ "${ROM_TYPE,,}" == "vivo" ]]; then
+    echo ""
+    echo "============================================"
+    echo " VIVO ROM DETECTED"
+    echo " Running Vivo image decompressor"
+    echo "============================================"
+
+    # Support vivoextractor.py from main repository
+    # OR from Tools/Firmware_extractor
+    if [[ -f "vivoextractor.py" ]]; then
+        VIVO_EXTRACTOR="vivoextractor.py"
+    elif [[ -f "Tools/Firmware_extractor/vivoextractor.py" ]]; then
+        VIVO_EXTRACTOR="Tools/Firmware_extractor/vivoextractor.py"
+    else
+        echo "ERROR: vivoextractor.py not found!"
+        exit 1
+    fi
+
+    echo "Using: $VIVO_EXTRACTOR"
+
+    # Clean previous output if present
+    rm -rf "UnpackedROMs/out"
+
+    # Decode Vivo wrapped images
+    python3 "$VIVO_EXTRACTOR" "UnpackedROMs"
+
+    if [[ ! -d "UnpackedROMs/out" ]]; then
+        echo "ERROR: Vivo extractor did not create UnpackedROMs/out"
+        exit 1
+    fi
+
+    shopt -s nullglob
+    VIVO_IMAGES=(UnpackedROMs/out/*.img)
+
+    if (( ${#VIVO_IMAGES[@]} == 0 )); then
+        echo "ERROR: Vivo extractor produced no decoded images!"
+        exit 1
+    fi
+
+    echo ""
+    echo "Replacing wrapped Vivo images with decoded images..."
+
+    for decoded_img in "${VIVO_IMAGES[@]}"; do
+        img_name="$(basename "$decoded_img")"
+
+        echo "  -> $img_name"
+
+        mv -f \
+            "$decoded_img" \
+            "UnpackedROMs/$img_name"
+    done
+
+    shopt -u nullglob
+
+    rm -rf "UnpackedROMs/out"
+
+    echo ""
+    echo "============================================"
+    echo " VIVO IMAGE DECOMPRESSION COMPLETE"
+    echo "============================================"
+
+    echo ""
+    echo "Filesystem check:"
+
+    for check_img in system system_ext product vendor odm; do
+        if [[ -f "UnpackedROMs/$check_img.img" ]]; then
+            echo "--------------------------------------------"
+            echo "$check_img.img"
+            file "UnpackedROMs/$check_img.img" || true
+            blkid "UnpackedROMs/$check_img.img" || true
+        fi
+    done
+
+    echo "============================================"
+fi
 for partition in $partitions; do
     if [[ -f "UnpackedROMs/$partition.img" ]]; then
         echo "Unpacking file: UnpackedROMs/$partition.img"
