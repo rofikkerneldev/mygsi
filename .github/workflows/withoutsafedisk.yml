@@ -29,6 +29,7 @@ on:
           - HMD
           - OneUI
           - HiOS
+          - Vivo
 
 jobs:
   RofikKernelDev:
